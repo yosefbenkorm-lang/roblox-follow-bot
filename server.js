@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// רשימת ה-Cookies של חשבונות הבוטים שלך נלקחת באופן מאובטח ממשתני הסביבה
 const botTokens = [
   process.env.BOT_COOKIE_1,
   process.env.BOT_COOKIE_2
@@ -18,6 +17,7 @@ async function getCsrfToken(cookie) {
     });
     return res.headers.get('x-csrf-token') || '';
   } catch (e) {
+    console.error('שגיאה בשליפת CSRF:', e);
     return '';
   }
 }
@@ -33,14 +33,17 @@ async function followPlayer(targetUserId) {
         headers: {
           'Content-Type': 'application/json',
           'Cookie': `.ROBLOSECURITY=${cookie}`,
-          'x-csrf-token': csrfToken
+          'x-csrf-token': csrfToken,
+          'Referer': 'https://www.roblox.com/'
         }
       });
+
+      const responseText = await res.text();
 
       if (res.ok) {
         console.log(`✅ בוט עקב בהצלחה אחרי שחקן ID: ${targetUserId}`);
       } else {
-        console.log(`⚠️ נכשל במעקב אחרי ${targetUserId}, סטטוס: ${res.status}`);
+        console.log(`⚠️ נכשל במעקב אחרי ${targetUserId}, סטטוס: ${res.status}, תגובה: ${responseText}`);
       }
     } catch (err) {
       console.error('❌ שגיאה בביצוע העקיבה:', err);
