@@ -1,11 +1,21 @@
 const express = require('express');
 const app = express();
+
+// פתרון לבעיית חסימת הדפדפן (CORS)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
-// פונקציה שאוספת את כל ה-Cookies של הבוטים מתוך משתני הסביבה (תומך בעד 100 בוטים ויותר)
 function getBotTokens() {
   const tokens = [];
-  // השרת יחפש אוטומטית משתנים מהצורה BOT_COOKIE_1, BOT_COOKIE_2, וכו' עד 100
   for (let i = 1; i <= 100; i++) {
     const token = process.env[`BOT_COOKIE_${i}`];
     if (token) {
@@ -29,7 +39,6 @@ async function getCsrfToken(cookie) {
   }
 }
 
-// פונקציה הממירה שמות משתמש (Username) ל-UserId של רובלוקס
 async function getUserIdByUsername(username) {
   try {
     const res = await fetch('https://users.roblox.com/v1/usernames/users', {
@@ -78,19 +87,17 @@ async function followPlayer(targetUserId) {
       console.error('❌ שגיאה בביצוע העקיבה:', err);
     }
     
-    // השהיה קטנה בין בוט לבוט כדי לא לקבל חסימת ספאם
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 }
 
-// כתובת חדשה שדרכה אפשר לשלוח Username
 app.post('/follow-user', async (req, res) => {
   const { username } = req.body;
   if (!username) {
     return res.status(400).send({ error: 'Missing username' });
   }
 
-  console.ق(`🔍 מחפש את ה-ID עבור השחקן: ${username}`);
+  console.log(`🔍 מחפש את ה-ID עבור השחקן: ${username}`);
   const userId = await getUserIdByUsername(username);
   
   if (!userId) {
